@@ -1,0 +1,11 @@
+def cutGraph(x)://xからtまでの部分問題において枝刈りを行う
+    P = [xから伸びる枝の先にある頂点]
+    while P is not empty do
+        Pから一つ取り出してvとする
+        vからtへの部分問題の下界を求める
+            if 求めた下界に閉路がない -> それがvからtへの部分問題の最適解として打ち切り
+        if vからtへの下界が他のv'\inPからtへの部分問題の上界より大きい -> vからの部分問題は打ち切り
+    for v not 打ち切り do
+        min_dist(s,v')<-min(min_dist(s,v)+dist(s,v' \in vの子節点))
+
+
