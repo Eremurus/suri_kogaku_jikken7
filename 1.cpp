@@ -15,8 +15,8 @@ double gettimeofday_sec(){
 
 struct Edge {
     int to; // 隣接頂点番号
-    long long w; // 重み
-    Edge(int to, long long w) : to(to), w(w) {}
+    int w; // 重み
+    Edge(int to, int w) : to(to), w(w) {}
 };
 
 double min_weight = pow(10,6);
@@ -59,7 +59,7 @@ void PathAll(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum){
 
 int main(){
     int N, M;
-    string filename("Graphs/n_20/n_20_m_380.txt");
+    string filename("Graphs/n_20/n_20_m_50.txt");
     int number;
 
     ifstream input_file(filename);
@@ -69,8 +69,7 @@ int main(){
     }
 
     int i=0;
-    vector<int> From, To;
-    vector<long long> W;
+    vector<int> From, To, W;
     while (input_file >> number) {
         i++;
         if(i==1) N = number;
@@ -88,12 +87,12 @@ int main(){
     for(int k=0; k<M; k++){
         int from = From[k];
         int to = To[k];
-        long long w = W[k];
+        int w = W[k];
         G[from].push_back(Edge(to, w));
         }
     vector<int> F_;
-    int s = 4;
-    int t = 3;
+    int s = 0;
+    int t = 10;
     F_.push_back(s);
 
     double start = gettimeofday_sec();
