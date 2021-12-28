@@ -24,6 +24,7 @@ vector<int> minPath;
 int node_num = 1;
 
 void PathAll(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum){
+    node_num += 1;
     for(auto e : G[x]){
         int y = e.to;
         bool include = false;
@@ -32,7 +33,6 @@ void PathAll(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum){
         }
         if(include) continue;
         else{
-            node_num += 1;
             vector<int> F_copy;
             int sum_tmp;
             copy(F.begin(), F.end(),back_inserter(F_copy));

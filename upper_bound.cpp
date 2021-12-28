@@ -95,7 +95,7 @@ int main() {
         for (auto e : G[v]) {
             bool include = false;
             for(i=0; i<F_.size();i++){
-                if(e.to == F_[i]) include = true;
+                //if(e.to == F_[i]) include = true;  //////忘れるなよ！！！
             }
             if(include) continue;
             if (chmin(dist[e.to], dist[v] + max(e.w,0))) {
