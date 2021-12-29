@@ -59,7 +59,7 @@ void PathAll(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum){
 
 int main(){
     int N, M;
-    string filename("Graphs/n_20/n_20_m_50.txt");
+    string filename("Graphs/n_8/n_8_m_50.txt");
     int number;
 
     ifstream input_file(filename);
@@ -92,7 +92,7 @@ int main(){
         }
     vector<int> F_;
     int s = 0;
-    int t = 10;
+    int t = 3;
     F_.push_back(s);
 
     double start = gettimeofday_sec();
