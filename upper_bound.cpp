@@ -33,7 +33,7 @@ bool chmin(int a, int b) {
 
 int main() {
     int N, M;
-    string filename("Graphs/n_20/n_20_m_50.txt");
+    string filename("Graphs/n_6/n_6_m_15.txt");
     int number;
 
     ifstream input_file(filename);
@@ -65,9 +65,10 @@ int main() {
         G[from].push_back(Edge(to, w));
         }
     vector<int> F_;
-    int s = 3;//始点
-    int t = 8;//終点
+    int s = 5;//始点
+    int t = 4;//終点
     F_.push_back(s);
+    F_.push_back(0);
 
     // ダイクストラ法
     vector<int> dist(N, INF);
@@ -95,7 +96,7 @@ int main() {
         for (auto e : G[v]) {
             bool include = false;
             for(i=0; i<F_.size();i++){
-                //if(e.to == F_[i]) include = true;  //////忘れるなよ！！！
+                if(e.to == F_[i]) include = true;  //////忘れるなよ！！！
             }
             if(include) continue;
             if (chmin(dist[e.to], dist[v] + max(e.w,0))) {

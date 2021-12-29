@@ -8,7 +8,6 @@
 #include <queue>
 using namespace std;
 
-int N, M;
 const int INF = pow(10,6);
 int min_weight = INF, node_num = 1, s, t;
 vector<int> minPath, F_;
@@ -33,7 +32,7 @@ struct Edge {
     Edge(int to, long long w) : to(to), w(w) {}
 };
 
-int upperBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum){
+int upperBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, int N){
     //cout << x<<"に対するupperが実行されたよ" << endl;
     if(x == t) return 0;
     vector<int> dist(N, INF);
@@ -56,6 +55,9 @@ int upperBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum){
 
         // d > dist[v] は，(d, v) がゴミであることを意味する
         if (d > dist[v]) continue; 
+        for(int i=0; i<F.size(); i++){
+            cout << F[i] << endl;
+        }
 
         // 頂点 v を始点とした各辺を緩和
         for (auto e : G[v]) {
@@ -75,7 +77,7 @@ int upperBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum){
     return dist[t];
 }
 
-pair<int, bool> lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum){
+pair<int, bool> lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, int N){
     //cout << x<<"に対するlowerが実行されたよ" << endl;
     if(x==t){
         pair<int, bool> a;
@@ -96,8 +98,17 @@ pair<int, bool> lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G,
         for (int v = 0; v < N; ++v) {
             // dist[v] = INF のときは頂点 v からの緩和を行わない
             if (dist[v] == INF) continue;
-            
+            bool include = false;
+            for(int _=0; _<F.size(); _++){
+                if(F[_] == v) include = true;
+            }
+            if(include && iter!=0) continue;
             for (auto e : G[v]) {
+                bool include_ = false;
+                for(int _=0; _<F.size(); _++){
+                    if(F[_] == v) include = true;
+                }
+                if(include_) continue;
                 // 緩和処理を行い，更新されたら update を true にする
                 if (chmin(dist[e.to], dist[v] + e.w)) {
                     dist[e.to] = dist[v] + e.w;
@@ -131,7 +142,7 @@ pair<int, bool> lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G,
     return a;
 }
 
-void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum){
+void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, int N){
     node_num += 1;
     vector<int> upper_vec;
     vector<int> lower_vec;
@@ -144,21 +155,23 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int 
             if(F[i] == y) include = true;
         }
         if(include){
-            //cout << y << "は走査済み";
+            cout << y << "は走査済み"<<endl;
             continue;
         }
         vector<int> F_tmp;
         copy(F.begin(), F.end(), back_inserter(F_tmp));
         F_tmp.push_back(y);
-        int upper = upperBound(y, t, F_tmp, G, sum) + e.w;
-        int lower = lowerBound(y, t, F_tmp, G, sum).first + e.w;
-        if(lowerBound(y, t, F_tmp, G, sum).second){
+        int upper = upperBound(y, t, F_tmp, G, sum, N) + e.w;
+        //cout << upperBound(y, t, F_tmp, G, sum, N) << endl;
+        int lower = lowerBound(y, t, F_tmp, G, sum, N).first + e.w;
+        cout << x<<"と"<<y<<"の間の枝をとおる.tへの経路の上界は"<<upper << "で、下界は"<<lower<<endl;
+        if(lowerBound(y, t, F_tmp, G, sum, N).second){
             //continue;//yからtへの部分問題の最短経路が求まってるので、求めた経路とその長さを利用してから打ち切る
         }
         upper_vec.push_back(upper);
         lower_vec.push_back(lower);
         search_edge.push_back(e);
-        //cout << y <<"をsearch_edgeに格納"<<endl;
+        cout << y <<"をsearch_edgeに格納"<<endl;
     }
 
     vector<int> erase_num;
@@ -167,7 +180,7 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int 
         for(int j=0; j<upper_vec.size(); j++){
             if(upper_vec[i] < lower_vec[j]){
                 erase_num.push_back(j);
-                cout << search_edge[j].to << "への枝は枝切りする予定です"<<endl;
+                cout << search_edge[j].to << "への枝は枝切りする予定です."<<search_edge[i].to<<"を通る経路の上界は"<<upper_vec[i]<<"で、"<<search_edge[j].to<<"を通る経路の下界は"<<lower_vec[j]<<endl;
             }
         }
     }
@@ -175,6 +188,7 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int 
     if(search_edge.size()!=0){
         for(auto e : search_edge){
             int y = e.to;
+            cout <<x<<"の部分問題において"<< y << "への枝を調べる可能性があります." << endl;
             k += 1;
             bool include = false;
             for(int i=0; i<erase_num.size(); i++){
@@ -202,14 +216,14 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int 
                 }
             }
             else{
-                branch_and_bound(y, t, F_copy, G,sum_tmp);
+                branch_and_bound(y, t, F_copy, G,sum_tmp, N);
             }
         }
     }
 }
 
 int main(){
-    string filename("Graphs/n_8/n_8_m_50.txt");
+    string filename("Graphs/n_6/n_6_m_15.txt");
     int number;
 
     ifstream input_file(filename);
@@ -221,6 +235,7 @@ int main(){
     int i=0;
     vector<int> From, To;
     vector<long long> W;
+    int N, M;
     while (input_file >> number) {
         i++;
         if(i==1) N = number;
@@ -242,11 +257,11 @@ int main(){
         G[from].push_back(Edge(to, w));
         }
     s = 0;
-    t = 3;
+    t = 4;
     F_.push_back(s);
 
     double start = gettimeofday_sec();
-    branch_and_bound(s,t,F_,G,0);
+    branch_and_bound(s,t,F_,G,0,N);
     double end = gettimeofday_sec();
     std::cout << "実行にかかった時間は " << (end-start)*1000 << " msec"<< endl;
     std::cout << "探索したノードの数は" << node_num <<endl;
