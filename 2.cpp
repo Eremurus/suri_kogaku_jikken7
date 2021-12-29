@@ -131,24 +131,29 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int 
             if(F[i] == y) include = true;
         }
         if(include) continue;
-        int upper = upperBound(y, t, F, G, sum) + e.w;
-        int lower = lowerBound(y, t, F, G, sum) + e.w;
+        vector<int> F_tmp;
+        copy(F.begin(), F.end(), back_inserter(F_tmp));
+        F_tmp.push_back(y);
+        int upper = upperBound(y, t, F_tmp, G, sum) + e.w;
+        int lower = lowerBound(y, t, F_tmp, G, sum) + e.w;
         upper_vec.push_back(upper);
         lower_vec.push_back(lower);
         search_edge.push_back(e);
     }
 
+    vector<int> erase_num;
     for(int i=0; i<upper_vec.size(); i++){
         for(int j=0; j<upper_vec.size(); j++){
             if(upper_vec[i] < lower_vec[j]){
-                search_edge.erase(search_edge.begin()+j);
+                erase_num.push_back(j);
             }
         }
     }
-
-    if(search_edge.size()==0) cout << "search_edgeが空だぞ〜" << endl;
-    else{
+    int k=-1;
+    if(search_edge.size()!=0){
         for(auto e : search_edge){
+            k += 1;
+            if(*find(erase_num.begin(), erase_num.end(), k)) continue;
             int y = e.to;
             vector<int> F_copy;
             int sum_tmp;
@@ -156,11 +161,11 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int 
             sum_tmp = sum + e.w;
             F_copy.push_back(y);
             if(y == t){
-                    //for(int i=0; i<F_copy.size(); i++){
-                        //if(i!= F_copy.size()-1) cout << F_copy[i] << " -> ";
-                        //else cout << F_copy[i] << " " << sum_tmp << endl;
-                    //}
-                    //cout << endl;
+                    for(int i=0; i<F_copy.size(); i++){
+                        if(i!= F_copy.size()-1) cout << F_copy[i] << " -> ";
+                        else cout << F_copy[i] << " " << sum_tmp << endl;
+                    }
+                    cout << endl;
                 if(sum_tmp < min_weight){
                     min_weight = sum_tmp;
                     minPath.clear();
