@@ -92,7 +92,7 @@ struct forLowerBound {
 } typedef forLowerBound;
 
 //ベルマンフォードで求めた最短路を再構成するための関数.
-int make_path(int tmp_node, int x, vector<vector<Edge> > G_rev, vector<int> F, vector<int> dist_){
+int make_path(int tmp_node, int x, vector<vector<Edge> > G_rev, vector<int> F, vector<int> dist_,vector<int> searched){
     for(auto e : G_rev[tmp_node]){
         int tmp_pre = e.to;
         if(vec_included(tmp_pre, F) && tmp_pre!=x){
@@ -104,10 +104,11 @@ int make_path(int tmp_node, int x, vector<vector<Edge> > G_rev, vector<int> F, v
         cout << tmp_node << "までのdistは"<<dist_[tmp_node]<<endl;
         cout << tmp_pre << "までのdistは"<<dist_[tmp_pre] <<endl;
         cout << "2点の間の枝の重さは"<<e.w << endl;
-        if(e.w == dist_[tmp_node] - dist_[tmp_pre]){
+        if(e.w == dist_[tmp_node] - dist_[tmp_pre] && !vec_included(tmp_pre, searched)){
             //cout << "あ" << endl;
             //cout << tmp_pre << endl;
             cout << tmp_node<<"からの調査は終了だよ"<<endl;
+
             cout << "次は"<<tmp_pre<<"から調査だね"<<endl;
             return tmp_pre;
             //cout << tmp << endl;
@@ -121,6 +122,7 @@ int make_path(int tmp_node, int x, vector<vector<Edge> > G_rev, vector<int> F, v
 forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, vector<vector<Edge> > G_rev, int sum, int N){
     //cout << x<<"に対するlowerが実行されたよ" << endl;
     vector<int> path_;
+    vector<int> searched;
     if(x==t){
         forLowerBound a;
         a.distance = 0;
@@ -135,7 +137,7 @@ forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, v
     //cout <<"代入したよ"<<endl;
     bool can_cut = false;
     cout << "lower boundを実行するよ.これは"<<x<<"の部分問題だよ" << endl;
-    for (int iter = 0; iter < N; iter++) {
+    for (int iter = 0; iter < N-F.size()+1; iter++) {
         bool update = false; // 更新が発生したかどうかを表すフラグ
         for (int v = 0; v < N; ++v) {
             // dist[v] = INF のときは頂点 v からの緩和を行わない
@@ -163,15 +165,15 @@ forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, v
         if (!update) break;
 
         // N 回目の反復で更新が行われたならば，負閉路をもつ
-        if (iter == N-1 && update){
+        if (iter == N-F.size() && update){
             exist_negative_cycle = true;
             break;
         }
     }
     //負閉路を持たない場合、経路を復元
-    /*
-    if(exist_negative_cycle==false){
-        cout << x<<"からの部分問題に負閉路はないよ、ここまではできてるよ" << endl;
+    
+    if(exist_negative_cycle==false && dist[t]!=INF){
+        //cout << x<<"からの部分問題に負閉路はないよ、ここまではできてるよ" << endl;
         
         can_cut = true;
         int tmp_node;
@@ -179,23 +181,36 @@ forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, v
         path_.insert(path_.begin(), t);
         int tmp_pre_;
         while(true){
-            tmp_pre_ = make_path(tmp_node, x, G_rev, F, dist);
-            cout << "make_pathが実行されたよ.pathには"<<tmp_pre_<<"が挿入されたね." <<endl;
+            tmp_pre_ = make_path(tmp_node, x, G_rev, F, dist, searched);
+            //cout << "make_pathが実行されたよ.pathには"<<tmp_pre_<<"が挿入されたね." <<endl;
             //cout << tmp_pre << endl;
             //cout << tmp_pre << endl;
             path_.insert(path_.begin(), tmp_pre_);
+            searched.push_back(tmp_node);
             tmp_node = tmp_pre_;
-            cout << "実行関数内では次は"<<tmp_node<<"から調べることになってるよ"<<endl;
-            if(tmp_node == x) break;
+            //cout << "実行関数内では次は"<<tmp_node<<"から調べることになってるよ"<<endl;
+            if(tmp_node == x){
+                cout << "到達!"<<endl;
+                path_.insert(path_.begin(), tmp_node);
+                break;
+            }
         }
-    }*/
-    if(exist_negative_cycle==false){
+    }
+    for(int i=0; i<dist.size(); i++){
+        cout << dist[i] << endl;
+    }
+    if(exist_negative_cycle) cout << "負閉路がある!!!"<<endl;
+    //cout << exist_negative_cycle << endl;
+
+    /*
+    if(exist_negative_cycle==false && dist[t]!= INF){
         can_cut = true;
         int tmp = t;
         path_.insert(path_.begin(), t);
         while(tmp!=x){
             for(auto e : G_rev[tmp]){
                 int tmp_pre = e.to;
+                //cout << tmp_pre << endl;
                 bool include = false;
                 for(int _=0; _<F.size(); _++){
                     if(F[_] == tmp_pre && tmp_pre!=x){
@@ -203,17 +218,20 @@ forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, v
                     }
                 }
                 if(include) continue;
+                cout << dist[tmp] << dist[tmp_pre] << endl;
                 if(e.w == dist[tmp] - dist[tmp_pre]){
+                    //cout << "一致!"<<tmp << "and" << tmp_pre <<endl;
                     path_.insert(path_.begin(), tmp_pre);
                     tmp = tmp_pre;
                 }
             }
-        }    
+        }
+        cout << "始点に到達!"<<endl;    
     }
     for(int i=0; i<path_.size(); i++){
         cout << path_[i] << endl;
     }
-    
+    */
     // 結果出力
     //for (int v = 0; v < N; ++v) {
     //    if (dist[v] < INF) cout << dist[v] << endl;
@@ -236,6 +254,7 @@ struct forBranchAndBound {
 
 
 void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, vector<vector<Edge> > G_rev, int sum, int N){
+    cout << "メイン関数のお出まし" << endl;
     node_num += 1;
     vector<int> upper_vec;
     vector<int> lower_vec;
@@ -255,9 +274,10 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, vect
         vector<int> F_tmp;
         copy(F.begin(), F.end(), back_inserter(F_tmp));
         F_tmp.push_back(y);
-        int upper = upperBound(y, t, F_tmp, G, sum, N) + e.w;
-        //cout << upperBound(y, t, F_tmp, G, sum, N) << endl;
         forLowerBound lower_tmp = lowerBound(y, t, F_tmp, G, G_rev, sum, N);
+        int upper = upperBound(y, t, F_tmp, G, sum, N) + e.w;
+        cout << "確かにupperが実行されている" << y << endl;
+        //cout << upperBound(y, t, F_tmp, G, sum, N) << endl;
         int lower = lower_tmp.distance + e.w;
         vector<int> path__;
         copy(lower_tmp.path.begin(), lower_tmp.path.end(), back_inserter(path__));
@@ -266,6 +286,7 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, vect
             upper = lower;
             forBranchAndBound b;
             b.distance = lower;
+            //cout << lower << endl;
             b.node = y;
             b.path = lower_tmp.path;
             edge_cut_vec.push_back(b);
@@ -307,11 +328,11 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, vect
                 copy(F.begin(), F.end(), back_inserter(F_copy));
                 F_copy.insert(F_copy.end(), edge_cut_vec[I].path.begin(), edge_cut_vec[I].path.end());
                 int sum_tmp = edge_cut_vec[I].distance+sum;
-                /*
+                
                 for(int i=0; i<F_copy.size(); i++){
-                    cout << F_copy[i] << endl;
+                    cout << F_copy[i]  <<"あ"<< endl;
                 }
-                */
+                
                 if(sum_tmp < min_weight){
                     min_weight = sum_tmp;
                     minPath.clear();
@@ -356,7 +377,7 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, vect
 }
 
 int main(){
-    string filename("Graphs/n_6/n_6_m_12.txt");
+    string filename("Graphs/n_6/n_6_m_15.txt");
     int number;
 
     ifstream input_file(filename);
@@ -391,8 +412,11 @@ int main(){
         G[from].push_back(Edge(to, w));
         G_rev[to].push_back(Edge(from, w));
         }
+    for(int i=0; i<G_rev[3].size(); i++){
+        cout << G_rev[3][i].to << endl;
+    }
     s = 2;
-    t = 4;
+    t = 5;
     F_.push_back(s);
 
     double start = gettimeofday_sec();

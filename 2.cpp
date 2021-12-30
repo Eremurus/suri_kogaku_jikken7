@@ -223,7 +223,7 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int 
 }
 
 int main(){
-    string filename("Graphs/n_8/n_8_m_30.txt");
+    string filename("Graphs/n_6/n_6_m_15.txt");
     int number;
 
     ifstream input_file(filename);
@@ -256,7 +256,7 @@ int main(){
         int w = W[k];
         G[from].push_back(Edge(to, w));
         }
-    s = 2;
+    s = 0;
     t = 5;
     F_.push_back(s);
 
