@@ -36,8 +36,9 @@ bool chmin(int a, int b) {
 
 int main(){
     int N, M;
-    string filename("Graphs/n_20/n_20_m_50.txt");
+    string filename("Graphs/test.txt");
     int number;
+    bool cancut = false;
 
     ifstream input_file(filename);
     if (!input_file.is_open()) {
@@ -60,20 +61,24 @@ int main(){
     input_file.close();
 
     vector<vector<Edge> > G(N);
+    vector<vector<Edge> > G_rev(N);
 
     for(int k=0; k<M; k++){
         int from = From[k];
         int to = To[k];
         int w = W[k];
         G[from].push_back(Edge(to, w));
+        G_rev[to].push_back(Edge(from, w));
         }
     vector<int> F_;
     int s = 0;//始点
-    int t = 3;//終点
+    int t = 4;//終点
     F_.push_back(s);
+
     bool exist_negative_cycle = false; // 負閉路をもつかどうか
     vector<int> dist(N, INF);
     dist[s] = 0;
+    vector<int> path_;
     for (int iter = 0; iter < N; ++iter) {
         bool update = false; // 更新が発生したかどうかを表すフラグ
         for (int v = 0; v < N; ++v) {
@@ -99,12 +104,33 @@ int main(){
         }
     }
 
+for(int i=0; i<N; i++){
+    cout << dist[i] << endl;
+}
+
     if(exist_negative_cycle==false){
-        //その部分問題の最短経路長を表す変数にdist[t]を代入.F_に最短経路上の頂点を格納.上界、下界を求め終わりpathallする際にF_が使われるのでこれで打ち切りができている.
+        cancut = true;
+        int tmp = t;
+        path_.insert(path_.begin(), t);
+        while(tmp!=s){
+            for(auto e : G_rev[tmp]){
+                int tmp_pre = e.to;
+                bool include = false;
+                for(int _=0; _<F.size(); _++){
+                    if(F[_] == tmp_pre && tmp_pre!=s){
+                        include = true;
+                    }
+                }
+                if(include) continue;
+                if(e.w == dist[tmp] - dist[tmp_pre]){
+                    path_.insert(path_.begin(), tmp_pre);
+                    tmp = tmp_pre;
+                }
+            }
+        }    
     }
     // 結果出力
-    for (int v = 0; v < N; ++v) {
-        if (dist[v] < INF) cout << dist[v] << endl;
-        else cout << "INF" << endl;
+    for(int i=0; i<path_.size(); i++){
+        cout << path_[i] << endl;
     }
 }

@@ -83,6 +83,35 @@ struct forLowerBound {
     vector<int> path;
 } typedef forLowerBound;
 
+int make_path(int tmp_node, int x, vector<vector<Edge> > G_rev, vector<int> F, vector<int> dist_){
+    for(auto e : G_rev[tmp_node]){
+        //cout << e.to<< endl;
+        int tmp_pre = e.to;
+        bool include = false;
+        for(int _=0; _<F.size(); _++){
+            if(F[_] == tmp_pre && tmp_pre!=x){
+                include = true;
+            }
+        }
+        if(include) continue;
+        cout << "この頂点から調べてるよ:" << tmp_node << endl;
+        cout << "この頂点までの距離を調べるよ:" << tmp_pre << endl;
+        cout << tmp_node << "までのdistは"<<dist_[tmp_node]<<endl;
+        cout << tmp_pre << "までのdistは"<<dist_[tmp_pre] <<endl;
+        cout << "よって2点の距離は"<<dist_[tmp_node] - dist_[tmp_pre] << endl;
+        if(e.w == dist_[tmp_node] - dist_[tmp_pre]){
+            //cout << "あ" << endl;
+            //cout << tmp_pre << endl;
+            cout << tmp_node<<"からの調査は終了だよ"<<endl;
+            cout << "次は"<<tmp_pre<<"から調査だね"<<endl;
+            return tmp_pre;
+            //cout << tmp << endl;
+        }
+    }
+    return 18;
+    //cout << "ないで" << endl;
+}
+
 forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, vector<vector<Edge> > G_rev, int sum, int N){
     //cout << x<<"に対するlowerが実行されたよ" << endl;
     vector<int> path_;
@@ -93,14 +122,13 @@ forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, v
         a.path = path_;
         return a;
     }
-    //xからtへの部分問題.閉路を許容した緩和問題とする.
-    //ベルマンフォードでN回やる
-    //これで本当に下界が求まるか一度試す
-    //行けそうなら、「閉路がなければ部分問題の解であるとして打ち切り、経路上の頂点を全てF_に格納」を実装
+
     bool exist_negative_cycle = false; // 負閉路をもつかどうか
     vector<int> dist(N, INF);
     dist[x] = 0;
+    cout <<"代入したよ"<<endl;
     bool can_cut = false;
+
     for (int iter = 0; iter < N-F.size()+1; ++iter) {
         bool update = false; // 更新が発生したかどうかを表すフラグ
         for (int v = 0; v < N; ++v) {
@@ -134,28 +162,25 @@ forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, v
             break;
         }
     }
-
+    //ここがおかしいんだよおおおおお
     if(exist_negative_cycle==false){
+        //cout << x<<"からの部分問題に負閉路はないよ、ここまではできてるよ" << endl;
         can_cut = true;
-        int tmp = t;
+        int tmp_node;
+        tmp_node = t;
         path_.insert(path_.begin(), t);
-        while(tmp!=x){
-            for(auto e : G_rev[tmp]){
-                int tmp_pre = e.to;
-                bool include = false;
-                for(int _=0; _<F.size(); _++){
-                    if(F[_] == tmp_pre && tmp_pre!=x){
-                        include = true;
-                    }
-                }
-                if(include) continue;
-                if(e.w == dist[tmp] - dist[tmp_pre]){
-                    path_.insert(path_.begin(), tmp_pre);
-                    tmp = tmp_pre;
-                }
-            }
+        int tmp_pre_;
+        while(tmp_node!=x){
+            tmp_pre_ = make_path(tmp_node, x, G_rev, F, dist);
+            //cout << tmp_pre << endl;
+            //cout << tmp_pre << endl;
+            path_.insert(path_.begin(), tmp_pre_);
+            tmp_node = tmp_pre_;
+            cout << "実行関数内では次は"<<tmp_node<<"から調べることになってるよ"<<endl;
         }
     }
+
+    
     // 結果出力
     //for (int v = 0; v < N; ++v) {
     //    if (dist[v] < INF) cout << dist[v] << endl;
@@ -243,6 +268,7 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, vect
                 }
             }
             vector<int> F_copy;
+            /*
             if(include){
                 copy(F.begin(), F.end(), back_inserter(F_copy));
                 F_copy.insert(F_copy.end(), edge_cut_vec[I].path.begin(), edge_cut_vec[I].path.end());
@@ -254,7 +280,7 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, vect
             }
             //もし配列にyが含まれていたら、F_copyにF+経路をコピーしてsum+lowerをmin_weightと比較.代入するか破棄するかして、continue.
             //cout <<x<<"の部分問題において"<< y << "への枝を調べる可能性があります." << endl;
-            
+            */
             include = false;
             for(int i=0; i<erase_num.size(); i++){
                 if(erase_num[i]==k) include=true;
@@ -288,7 +314,7 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, vect
 }
 
 int main(){
-    string filename("Graphs/n_8/n_8_m_30.txt");
+    string filename("Graphs/n_6/n_6_m_12.txt");
     int number;
 
     ifstream input_file(filename);
