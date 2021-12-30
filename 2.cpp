@@ -106,7 +106,7 @@ pair<int, bool> lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G,
             for (auto e : G[v]) {
                 bool include_ = false;
                 for(int _=0; _<F.size(); _++){
-                    if(F[_] == v) include = true;
+                    if(F[_] == v && v!=x) include_ = true;
                 }
                 if(include_) continue;
                 // 緩和処理を行い，更新されたら update を true にする
@@ -121,7 +121,7 @@ pair<int, bool> lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G,
         if (!update) break;
 
         // N 回目の反復で更新が行われたならば，負閉路をもつ
-        if (iter == N - 1 && update){
+        if (iter == N - F.size() && update){
             exist_negative_cycle = true;
             break;
         }

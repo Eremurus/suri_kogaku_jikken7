@@ -9,13 +9,23 @@
 using namespace std;
 
 const int INF = pow(10,6);
-int min_weight = INF, node_num = 1, s, t;
+int min_weight = INF, node_num = 0, s, t;
 vector<int> minPath, F_;
 
+//時間を計る関数
 double gettimeofday_sec(){
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec+(double) tv.tv_usec*1e-6;
+}
+
+//ベクトルに要素a が含まれているかどうか
+bool vec_included(int a, vector<int> vec){
+    bool include = false;
+    for(int i=0; i<vec.size(); i++){
+        if(vec[i] == a) include = true;
+    }
+    return include;
 }
 
 // 緩和を実施する関数
@@ -26,14 +36,16 @@ bool chmin(int a, int b) {
     else return false;
 }
 
+//枝を表す
 struct Edge {
     int to; // 隣接頂点番号
     int w; // 重み
     Edge(int to, long long w) : to(to), w(w) {}
 };
 
+//x からt への部分問題において上界を計算
 int upperBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, int N){
-    //cout << x<<"に対するupperが実行されたよ" << endl;
+    cout << x<<"に対するupperが実行されたよ" << endl;
     if(x == t) return 0;
     vector<int> dist(N, INF);
     dist[x] = 0;
@@ -61,11 +73,7 @@ int upperBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, in
 
         // 頂点 v を始点とした各辺を緩和
         for (auto e : G[v]) {
-            bool include = false;
-            for(int i=0; i<F.size(); i++){
-                if(F[i] == e.to) include = true;
-            }
-            if(include) continue;
+            if(vec_included(e.to, F)) continue;
             if (chmin(dist[e.to], dist[v] + max(e.w,0))) {
                 // 更新があるならヒープに新たに挿入
                 dist[e.to] = dist[v] + max(e.w, 0);
@@ -73,32 +81,29 @@ int upperBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, in
             }
         }
     }
-    //cout << x << "に対するupperは"<<dist[t] << endl;
-    return dist[t];
+    return dist[t];//上界を返す
 }
 
+//下界、負閉路が存在しないかどうか、負閉路が存在しない時の経路(最短路)
 struct forLowerBound {
     int distance;
     bool canCut;
     vector<int> path;
 } typedef forLowerBound;
 
+//ベルマンフォードで求めた最短路を再構成するための関数.
 int make_path(int tmp_node, int x, vector<vector<Edge> > G_rev, vector<int> F, vector<int> dist_){
     for(auto e : G_rev[tmp_node]){
-        //cout << e.to<< endl;
         int tmp_pre = e.to;
-        bool include = false;
-        for(int _=0; _<F.size(); _++){
-            if(F[_] == tmp_pre && tmp_pre!=x){
-                include = true;
-            }
+        if(vec_included(tmp_pre, F) && tmp_pre!=x){
+            cout << e.to<<"への枝はパスしました"<<endl;
+            continue;
         }
-        if(include) continue;
         cout << "この頂点から調べてるよ:" << tmp_node << endl;
         cout << "この頂点までの距離を調べるよ:" << tmp_pre << endl;
         cout << tmp_node << "までのdistは"<<dist_[tmp_node]<<endl;
         cout << tmp_pre << "までのdistは"<<dist_[tmp_pre] <<endl;
-        cout << "よって2点の距離は"<<dist_[tmp_node] - dist_[tmp_pre] << endl;
+        cout << "2点の間の枝の重さは"<<e.w << endl;
         if(e.w == dist_[tmp_node] - dist_[tmp_pre]){
             //cout << "あ" << endl;
             //cout << tmp_pre << endl;
@@ -108,10 +113,11 @@ int make_path(int tmp_node, int x, vector<vector<Edge> > G_rev, vector<int> F, v
             //cout << tmp << endl;
         }
     }
-    return 18;
+    return INF;
     //cout << "ないで" << endl;
 }
 
+//下界を求めるための関数.
 forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, vector<vector<Edge> > G_rev, int sum, int N){
     //cout << x<<"に対するlowerが実行されたよ" << endl;
     vector<int> path_;
@@ -126,10 +132,10 @@ forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, v
     bool exist_negative_cycle = false; // 負閉路をもつかどうか
     vector<int> dist(N, INF);
     dist[x] = 0;
-    cout <<"代入したよ"<<endl;
+    //cout <<"代入したよ"<<endl;
     bool can_cut = false;
-
-    for (int iter = 0; iter < N-F.size()+1; ++iter) {
+    cout << "lower boundを実行するよ.これは"<<x<<"の部分問題だよ" << endl;
+    for (int iter = 0; iter < N; iter++) {
         bool update = false; // 更新が発生したかどうかを表すフラグ
         for (int v = 0; v < N; ++v) {
             // dist[v] = INF のときは頂点 v からの緩和を行わない
@@ -142,7 +148,7 @@ forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, v
             for (auto e : G[v]) {
                 bool include_ = false;
                 for(int _=0; _<F.size(); _++){
-                    if(F[_] == v) include = true;
+                    if(F[_] == v && v!=x) include_ = true;
                 }
                 if(include_) continue;
                 // 緩和処理を行い，更新されたら update を true にする
@@ -157,29 +163,56 @@ forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, v
         if (!update) break;
 
         // N 回目の反復で更新が行われたならば，負閉路をもつ
-        if (iter == N - 1 && update){
+        if (iter == N-1 && update){
             exist_negative_cycle = true;
             break;
         }
     }
-    //ここがおかしいんだよおおおおお
+    //負閉路を持たない場合、経路を復元
+    /*
     if(exist_negative_cycle==false){
-        //cout << x<<"からの部分問題に負閉路はないよ、ここまではできてるよ" << endl;
+        cout << x<<"からの部分問題に負閉路はないよ、ここまではできてるよ" << endl;
+        
         can_cut = true;
         int tmp_node;
         tmp_node = t;
         path_.insert(path_.begin(), t);
         int tmp_pre_;
-        while(tmp_node!=x){
+        while(true){
             tmp_pre_ = make_path(tmp_node, x, G_rev, F, dist);
+            cout << "make_pathが実行されたよ.pathには"<<tmp_pre_<<"が挿入されたね." <<endl;
             //cout << tmp_pre << endl;
             //cout << tmp_pre << endl;
             path_.insert(path_.begin(), tmp_pre_);
             tmp_node = tmp_pre_;
             cout << "実行関数内では次は"<<tmp_node<<"から調べることになってるよ"<<endl;
+            if(tmp_node == x) break;
         }
+    }*/
+    if(exist_negative_cycle==false){
+        can_cut = true;
+        int tmp = t;
+        path_.insert(path_.begin(), t);
+        while(tmp!=x){
+            for(auto e : G_rev[tmp]){
+                int tmp_pre = e.to;
+                bool include = false;
+                for(int _=0; _<F.size(); _++){
+                    if(F[_] == tmp_pre && tmp_pre!=x){
+                        include = true;
+                    }
+                }
+                if(include) continue;
+                if(e.w == dist[tmp] - dist[tmp_pre]){
+                    path_.insert(path_.begin(), tmp_pre);
+                    tmp = tmp_pre;
+                }
+            }
+        }    
     }
-
+    for(int i=0; i<path_.size(); i++){
+        cout << path_[i] << endl;
+    }
     
     // 結果出力
     //for (int v = 0; v < N; ++v) {
@@ -194,6 +227,7 @@ forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, v
     return a;
 }
 
+//メイン関数の返す型
 struct forBranchAndBound {
     int distance;
     int node;
@@ -225,8 +259,8 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, vect
         //cout << upperBound(y, t, F_tmp, G, sum, N) << endl;
         forLowerBound lower_tmp = lowerBound(y, t, F_tmp, G, G_rev, sum, N);
         int lower = lower_tmp.distance + e.w;
-        vector<int> path;
-        copy(lower_tmp.path.begin(), lower_tmp.path.end(), back_inserter(path));
+        vector<int> path__;
+        copy(lower_tmp.path.begin(), lower_tmp.path.end(), back_inserter(path__));
         //cout << x<<"と"<<y<<"の間の枝をとおる.tへの経路の上界は"<<upper << "で、下界は"<<lower<<endl;
         if(lower_tmp.canCut){
             upper = lower;
@@ -259,28 +293,36 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, vect
             int y = e.to;
             k += 1;  
             bool include = false;
+            
             int I;
             for(int i=0; i<edge_cut_vec.size(); i++){
                 if(edge_cut_vec[i].node == y){
                     include = true;
                     I = i;
-                    break;
                 }
             }
+            
             vector<int> F_copy;
-            /*
             if(include){
                 copy(F.begin(), F.end(), back_inserter(F_copy));
                 F_copy.insert(F_copy.end(), edge_cut_vec[I].path.begin(), edge_cut_vec[I].path.end());
                 int sum_tmp = edge_cut_vec[I].distance+sum;
+                /*
+                for(int i=0; i<F_copy.size(); i++){
+                    cout << F_copy[i] << endl;
+                }
+                */
                 if(sum_tmp < min_weight){
                     min_weight = sum_tmp;
+                    minPath.clear();
+                    copy(F_copy.begin(), F_copy.end(), back_inserter(minPath));
                 }
                 continue;
             }
             //もし配列にyが含まれていたら、F_copyにF+経路をコピーしてsum+lowerをmin_weightと比較.代入するか破棄するかして、continue.
             //cout <<x<<"の部分問題において"<< y << "への枝を調べる可能性があります." << endl;
-            */
+            
+            
             include = false;
             for(int i=0; i<erase_num.size(); i++){
                 if(erase_num[i]==k) include=true;
@@ -350,7 +392,7 @@ int main(){
         G_rev[to].push_back(Edge(from, w));
         }
     s = 2;
-    t = 5;
+    t = 4;
     F_.push_back(s);
 
     double start = gettimeofday_sec();

@@ -103,11 +103,11 @@ int main(){
             break;
         }
     }
-
+/*
 for(int i=0; i<N; i++){
     cout << dist[i] << endl;
 }
-
+*/
     if(exist_negative_cycle==false){
         cancut = true;
         int tmp = t;
