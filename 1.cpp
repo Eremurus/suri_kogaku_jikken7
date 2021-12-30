@@ -59,7 +59,7 @@ void PathAll(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum){
 
 int main(){
     int N, M;
-    string filename("Graphs/n_15/n_15_m_80.txt");
+    string filename("Graphs/n_8/n_8_m_30.txt");
     int number;
 
     ifstream input_file(filename);
@@ -91,7 +91,7 @@ int main(){
         G[from].push_back(Edge(to, w));
         }
     vector<int> F_;
-    int s = 3;
+    int s = 2;
     int t = 5;
     F_.push_back(s);
 

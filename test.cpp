@@ -5,14 +5,18 @@
 #include <algorithm>
 using namespace std;
 
-pair<int, bool> dora(int x){
-    pair<int, bool> a;
-    a.first = 3;
-    a.second = true;
-    return a;
-}
+struct forLowerBound {
+    vector<int> path;
+} typedef forLowerBound;
 
 int main(){
-    cout << dora(1).first << endl;
-    cout << dora(0).second << endl;
+    vector<int> dora;
+    dora.push_back(1);
+    dora.push_back(2);
+    forLowerBound a;
+    a.path = dora;
+    for(int i=0; i<a.path.size(); i++){
+        cout << a.path[i] << endl;
+    }
+    //cout << a.path.size() << endl;
 }
