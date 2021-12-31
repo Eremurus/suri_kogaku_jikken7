@@ -21,7 +21,7 @@ struct Edge {
 
 double min_weight = pow(10,6);
 vector<int> minPath;
-int node_num = 1;
+int node_num = 0;
 
 void PathAll(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum){
     node_num += 1;
@@ -59,7 +59,7 @@ void PathAll(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum){
 
 int main(){
     int N, M;
-    string filename("Graphs/n_6/n_6_m_15.txt");
+    string filename("Graphs/n_20/n_20_m_43.txt");
     int number;
 
     ifstream input_file(filename);
@@ -91,8 +91,8 @@ int main(){
         G[from].push_back(Edge(to, w));
         }
     vector<int> F_;
-    int s = 0;
-    int t = 5;
+    int s = 3;
+    int t = 8;
     F_.push_back(s);
 
     double start = gettimeofday_sec();

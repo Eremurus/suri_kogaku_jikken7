@@ -9,7 +9,7 @@
 using namespace std;
 
 const int INF = pow(10,6);
-int min_weight = INF, node_num = 1, s, t;
+int min_weight = INF, node_num = 0, s, t;
 vector<int> minPath, F_;
 
 double gettimeofday_sec(){
@@ -223,7 +223,7 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int 
 }
 
 int main(){
-    string filename("Graphs/n_6/n_6_m_15.txt");
+    string filename("Graphs/n_20/n_20_m_43.txt");
     int number;
 
     ifstream input_file(filename);
@@ -256,8 +256,8 @@ int main(){
         int w = W[k];
         G[from].push_back(Edge(to, w));
         }
-    s = 0;
-    t = 5;
+    s = 3;
+    t = 8;
     F_.push_back(s);
 
     double start = gettimeofday_sec();

@@ -43,6 +43,40 @@ struct Edge {
     Edge(int to, long long w) : to(to), w(w) {}
 };
 
+
+vector<int> PathAll(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, int min_weight){
+    node_num += 1;
+    for(auto e : G[x]){
+        int y = e.to;
+        bool include = false;
+        for(int i=0; i<F.size(); i++){
+            if(F[i] == y) include = true;
+        }
+        if(include) continue;
+        else{
+            vector<int> F_copy;
+            int sum_tmp;
+            copy(F.begin(), F.end(),back_inserter(F_copy));
+            sum_tmp = sum + e.w;
+            F_copy.push_back(y);
+            if(y == t){
+                //for(int i=0; i<F_copy.size(); i++){
+                    //if(i!= F_copy.size()-1) cout << F_copy[i] << " -> ";
+                    //else cout << F_copy[i] << " " << sum_tmp << endl;
+                //}
+                //cout << endl;
+                if(sum_tmp == min_weight){
+                    return F_copy;
+                    //copy(F_copy.begin(), F_copy.end(), back_inserter(minPath));
+                }
+            }
+            else{
+                PathAll(y, t, F_copy, G,sum_tmp, min_weight);
+            }
+        }
+    }
+}
+
 //x からt への部分問題において上界を計算
 int upperBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, int N){
     cout << x<<"に対するupperが実行されたよ" << endl;
@@ -92,6 +126,7 @@ struct forLowerBound {
 } typedef forLowerBound;
 
 //ベルマンフォードで求めた最短路を再構成するための関数.
+/*
 int make_path(int tmp_node, int x, vector<vector<Edge> > G_rev, vector<int> F, vector<int> dist_,vector<int> searched){
     for(auto e : G_rev[tmp_node]){
         int tmp_pre = e.to;
@@ -104,7 +139,7 @@ int make_path(int tmp_node, int x, vector<vector<Edge> > G_rev, vector<int> F, v
         cout << tmp_node << "までのdistは"<<dist_[tmp_node]<<endl;
         cout << tmp_pre << "までのdistは"<<dist_[tmp_pre] <<endl;
         cout << "2点の間の枝の重さは"<<e.w << endl;
-        if(e.w == dist_[tmp_node] - dist_[tmp_pre] && !vec_included(tmp_pre, searched)){
+        if(e.w == dist_[tmp_node] - dist_[tmp_pre] && vec_included(tmp_pre, searched)==false){
             //cout << "あ" << endl;
             //cout << tmp_pre << endl;
             cout << tmp_node<<"からの調査は終了だよ"<<endl;
@@ -117,12 +152,11 @@ int make_path(int tmp_node, int x, vector<vector<Edge> > G_rev, vector<int> F, v
     return INF;
     //cout << "ないで" << endl;
 }
-
+*/
 //下界を求めるための関数.
 forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, vector<vector<Edge> > G_rev, int sum, int N){
     //cout << x<<"に対するlowerが実行されたよ" << endl;
     vector<int> path_;
-    vector<int> searched;
     if(x==t){
         forLowerBound a;
         a.distance = 0;
@@ -174,12 +208,14 @@ forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, v
     
     if(exist_negative_cycle==false && dist[t]!=INF){
         //cout << x<<"からの部分問題に負閉路はないよ、ここまではできてるよ" << endl;
-        
+        vector<int> searched;
         can_cut = true;
         int tmp_node;
         tmp_node = t;
-        path_.insert(path_.begin(), t);
+        //path_.insert(path_.begin(), t);
         int tmp_pre_;
+        //path_ = PathAll(x, t, F, G, 0, dist[t]);
+        /*
         while(true){
             tmp_pre_ = make_path(tmp_node, x, G_rev, F, dist, searched);
             //cout << "make_pathが実行されたよ.pathには"<<tmp_pre_<<"が挿入されたね." <<endl;
@@ -187,6 +223,11 @@ forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, v
             //cout << tmp_pre << endl;
             path_.insert(path_.begin(), tmp_pre_);
             searched.push_back(tmp_node);
+            cout << "今searchedに入っているのは";
+            for(int i=0; i<searched.size(); i++){
+                cout << searched[i] << ",";
+            }
+            cout << endl;
             tmp_node = tmp_pre_;
             //cout << "実行関数内では次は"<<tmp_node<<"から調べることになってるよ"<<endl;
             if(tmp_node == x){
@@ -194,7 +235,7 @@ forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, v
                 path_.insert(path_.begin(), tmp_node);
                 break;
             }
-        }
+        }*/
     }
     for(int i=0; i<dist.size(); i++){
         cout << dist[i] << endl;
@@ -241,7 +282,7 @@ forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, v
     forLowerBound a;
     a.distance = dist[t];
     a.canCut = can_cut;
-    a.path = path_;
+    a.path = PathAll(x, t, F, G, 0, dist[t]);
     return a;
 }
 
