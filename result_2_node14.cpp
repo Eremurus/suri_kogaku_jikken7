@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <queue>
 using namespace std;
+using std::ofstream;
 
 const int INF = pow(10,6);
 int min_weight = INF, node_num = 0, s, t;
@@ -223,55 +224,87 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int 
 }
 
 int main(){
-    string filename("Graphs/n_6/n_6_m_12.txt");
-    int number;
+    string file_name0 = "Graphs/n_14/n_14_m_30.txt";
+    string file_name1 = "Graphs/n_14/n_14_m_40.txt";
+    string file_name2 = "Graphs/n_14/n_14_m_50.txt";
+    string file_name3 = "Graphs/n_14/n_14_m_60.txt";
+    string file_name4 = "Graphs/n_14/n_14_m_70.txt";
+    string file_name5 = "Graphs/n_14/n_14_m_80.txt";
+    string file_name6 = "Graphs/n_14/n_14_m_90.txt";
+    string file_name7 = "Graphs/n_14/n_14_m_100.txt";
+    string file_name8 = "Graphs/n_14/n_14_m_110.txt";
+    string file_name9 = "Graphs/n_14/n_14_m_120.txt";
 
-    ifstream input_file(filename);
-    if (!input_file.is_open()) {
-        cerr << "Could not open the file - '"<< filename << "'" << endl;
-        return EXIT_FAILURE;
-    }
+    vector<string> file_name;
+    file_name.push_back(file_name0);
+    file_name.push_back(file_name1);
+    file_name.push_back(file_name2);
+    file_name.push_back(file_name3);
+    file_name.push_back(file_name4);
+    file_name.push_back(file_name5);
+    file_name.push_back(file_name6);
+    file_name.push_back(file_name7);
+    file_name.push_back(file_name8);
+    file_name.push_back(file_name9);
 
-    int i=0;
-    vector<int> From, To;
-    vector<long long> W;
-    int N, M;
-    while (input_file >> number) {
-        i++;
-        if(i==1) N = number;
-        else if(i==2) M = number;
-        else{
-            if (i%3==0) From.push_back(number);
-            if (i%3==1) To.push_back(number);
-            if (i%3==2) W.push_back(number);
+    int N,M;
+    std::ofstream writing_file;
+    std::string filename = "kadai2_n_14.txt";
+    writing_file.open(filename, std::ios::out);
+
+    for(int _=0; _<file_name.size(); _++){
+        int edge_num = _*10 + 30;
+        string filename(file_name[_]);
+        int number;
+        ifstream input_file(filename);
+        if (!input_file.is_open()) {
+            cerr << "Could not open the file - '"<< filename << "'" << endl;
+            return EXIT_FAILURE;
         }
-    }
-    input_file.close();
 
-    vector<vector<Edge> > G(N);
-
-    for(int k=0; k<M; k++){
-        int from = From[k];
-        int to = To[k];
-        int w = W[k];
-        G[from].push_back(Edge(to, w));
+        int i=0;
+        vector<int> From, To, W;
+        while (input_file >> number) {
+            i++;
+            if(i==1) N = number;
+            else if(i==2) M = number;
+            else{
+                if (i%3==0) From.push_back(number);
+                if (i%3==1) To.push_back(number);
+                if (i%3==2) W.push_back(number);
+            }
         }
-    s = 0;
-    t = N-1;
-    F_.push_back(s);
+        input_file.close();
 
-    double start = gettimeofday_sec();
-    branch_and_bound(s,t,F_,G,0,N);
-    double end = gettimeofday_sec();
-    std::cout << "実行にかかった時間は " << (end-start)*1000 << " msec"<< endl;
-    std::cout << "探索したノードの数は" << node_num <<endl;
+        vector<vector<Edge> > G(N);
 
-    std::cout << "最短経路は" << endl;
-    for(int i=0; i<minPath.size(); i++){
-        if(i != minPath.size()-1) std::cout << minPath[i] << " -> ";
-        else{
-            std::cout << minPath[i]<< endl;
+        for(int k=0; k<M; k++){
+            int from = From[k];
+            int to = To[k];
+            int w = W[k];
+            G[from].push_back(Edge(to, w));
+            }
+        vector<int> F_;
+        int s = 0;
+        int t = N-1;
+        F_.push_back(s);
+
+        double start = gettimeofday_sec();
+        branch_and_bound(s,t,F_,G,0,N);
+        double end = gettimeofday_sec();
+        writing_file << edge_num << "\t"<<(end-start)*1000<<"\t" << node_num << endl;
+        //writing_file << "実行にかかった時間は " << (end-start)*1000 << " msec"<< endl;
+        //cout << "探索したノードの数は" << node_num <<endl;
+
+        //cout << "最短経路は" << endl;
+        /*
+        for(int i=0; i<minPath.size(); i++){
+            if(i != minPath.size()-1) cout << minPath[i] << " -> ";
+            else{
+                cout << minPath[i]<< endl;
+            }
+        }*/
+        //cout << "その距離は " << min_weight << endl;
         }
-    }
-    std::cout << "その距離は " << min_weight << endl;
+        writing_file.close();
 }

@@ -32,7 +32,7 @@ struct Edge {
     Edge(int to, long long w) : to(to), w(w) {}
 };
 
-int upperBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, int N){
+int upperBound(int x, int t, vector<int> F, vector<vector<Edge> > G, vector<vector<Edge> > G_rev, int sum, int N){
     //cout << x<<"に対するupperが実行されたよ" << endl;
     if(x == t) return 0;
     vector<int> dist(N, INF);
@@ -142,7 +142,7 @@ pair<int, bool> lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G,
     return a;
 }
 
-void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, int N){
+void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, vector<vector<Edge> > G_rev, int sum, int N){
     node_num += 1;
     vector<int> upper_vec;
     vector<int> lower_vec;
@@ -161,7 +161,7 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int 
         vector<int> F_tmp;
         copy(F.begin(), F.end(), back_inserter(F_tmp));
         F_tmp.push_back(y);
-        int upper = upperBound(y, t, F_tmp, G, sum, N) + e.w;
+        int upper = upperBound(y, t, F_tmp, G, G_rev, sum, N) + e.w;
         //cout << upperBound(y, t, F_tmp, G, sum, N) << endl;
         int lower = lowerBound(y, t, F_tmp, G, sum, N).first + e.w;
         //cout << x<<"と"<<y<<"の間の枝をとおる.tへの経路の上界は"<<upper << "で、下界は"<<lower<<endl;
@@ -216,14 +216,14 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int 
                 }
             }
             else{
-                branch_and_bound(y, t, F_copy, G,sum_tmp, N);
+                branch_and_bound(y, t, F_copy, G, G_rev, sum_tmp, N);
             }
         }
     }
 }
 
 int main(){
-    string filename("Graphs/n_6/n_6_m_12.txt");
+    string filename("Graphs/n_20/n_20_m_50.txt");
     int number;
 
     ifstream input_file(filename);
@@ -249,19 +249,21 @@ int main(){
     input_file.close();
 
     vector<vector<Edge> > G(N);
+    vector<vector<Edge> > G_rev(N);
 
     for(int k=0; k<M; k++){
         int from = From[k];
         int to = To[k];
         int w = W[k];
         G[from].push_back(Edge(to, w));
+        G_rev[to].push_back(Edge(from, w));
         }
     s = 0;
     t = N-1;
     F_.push_back(s);
 
     double start = gettimeofday_sec();
-    branch_and_bound(s,t,F_,G,0,N);
+    branch_and_bound(s,t,F_,G,G_rev,0,N);
     double end = gettimeofday_sec();
     std::cout << "実行にかかった時間は " << (end-start)*1000 << " msec"<< endl;
     std::cout << "探索したノードの数は" << node_num <<endl;
