@@ -8,20 +8,16 @@
 #include <queue>
 using namespace std;
 
-// 無限大を表す値
-const long long INF = 1LL << 60; // 十分大きな値を用いる (ここでは 2^60)
+const int INF = pow(10,6);
+int min_weight = INF, node_num = 0, s, t;
+vector<int> minPath, F_;
 
-// 辺を表す型，ここでは重みを表す型を long long 型とする
 struct Edge {
     int to; // 隣接頂点番号
-    long long w; // 重み
+    int w; // 重み
     Edge(int to, long long w) : to(to), w(w) {}
 };
 
-// 重み付きグラフを表す型
-//using Graph = vector<vector<Edge>>;
-
-// 緩和を実施する関数
 bool chmin(int a, int b) {
     if (a > b) {
         return true;
@@ -29,56 +25,54 @@ bool chmin(int a, int b) {
     else return false;
 }
 
-int main() {
-    string filename("Graphs/n_8/n_8_m_30.txt");
-    int number;
+struct forLowerBound {
+    int distance;
+    bool canCut;
+    vector<int> path;
+} typedef forLowerBound;
 
-    ifstream input_file(filename);
-    if (!input_file.is_open()) {
-        cerr << "Could not open the file - '"<< filename << "'" << endl;
-        return EXIT_FAILURE;
+bool included(int a, vector<int> vec){
+    bool include = false;
+    for(int i=0; i<vec.size(); i++){
+        if(vec[i]==a) include = true;
+    }
+    return include;
+}
+
+
+forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, vector<vector<Edge> > G_rev, int sum, int N){
+    //cout << x<<"に対するlowerが実行されたよ" << endl;
+    vector<int> path_;
+    vector<int> prev(N, -1);
+    if(x==t){
+        forLowerBound a;
+        a.distance = 0;
+        a.canCut = true;
+        a.path = path_;
+        return a;
     }
 
-    int i=0;
-    vector<int> From, To;
-    vector<long long> W;
-    int N, M;
-    while (input_file >> number) {
-        i++;
-        if(i==1) N = number;
-        else if(i==2) M = number;
-        else{
-            if (i%3==0) From.push_back(number);
-            if (i%3==1) To.push_back(number);
-            if (i%3==2) W.push_back(number);
-        }
-    }
-    input_file.close();
-
-    vector<vector<Edge> > G(N);
-
-    for(int k=0; k<M; k++){
-        int from = From[k];
-        int to = To[k];
-        int w = W[k];
-        G[from].push_back(Edge(to, w));
-        }
-    int s = 2;
-    int t = 5;
-    // ベルマン・フォード法
     bool exist_negative_cycle = false; // 負閉路をもつかどうか
-    vector<long long> dist(N, INF);
-    dist[s] = 0;
-    for (int iter = 0; iter < N; ++iter) {
+    vector<int> dist(N, INF);
+    dist[x] = 0;
+    bool can_cut = false;
+    for (int iter = 0; iter < N-F.size()+1; iter++) {
         bool update = false; // 更新が発生したかどうかを表すフラグ
         for (int v = 0; v < N; ++v) {
             // dist[v] = INF のときは頂点 v からの緩和を行わない
             if (dist[v] == INF) continue;
-            
+            bool include = false;
+            for(int _=0; _<F.size(); _++){
+                if(F[_] == v && v!= x) include = true;
+            }
+            if(include) continue;
+
             for (auto e : G[v]) {
                 // 緩和処理を行い，更新されたら update を true にする
-                if (chmin(dist[e.to], dist[v] + e.w)) {
+                if (chmin(dist[e.to], dist[v] + e.w) && e.to!=x && !included(e.to, F)) {
+                    dist[e.to] = dist[v] + e.w;
                     update = true;
+                    prev[e.to] = v;
                 }
             }
         }
@@ -87,15 +81,21 @@ int main() {
         if (!update) break;
 
         // N 回目の反復で更新が行われたならば，負閉路をもつ
-        if (iter == N - 1 && update) exist_negative_cycle = true;
-    }
-
-    // 結果出力
-    if (exist_negative_cycle) cout << "NEGATIVE CYCLE" << endl;
-    else {
-        for (int v = 0; v < N; ++v) {
-            if (dist[v] < INF) cout << dist[v] << endl;
-            else cout << "INF" << endl;
+        if (iter == N-F.size() && update){
+            exist_negative_cycle = true;
+            break;
         }
     }
+    //負閉路を持たない場合、経路を復元
+    if(exist_negative_cycle==false && dist[t]!=INF){
+        can_cut = true;
+        for(; t!=-1; t=prev[t]) path_.push_back(t);
+        reverse(path_.begin(), path_.end());
+    }
+    forLowerBound a;
+    a.distance = dist[t];
+    a.canCut = can_cut;
+    a.path = path_;
+    return a;
 }
+

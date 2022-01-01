@@ -178,7 +178,7 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int 
 
     for(int i=0; i<upper_vec.size(); i++){
         for(int j=0; j<upper_vec.size(); j++){
-            if(upper_vec[i] < lower_vec[j]){
+            if(upper_vec[i] < lower_vec[j] || min_weight<lower_vec[j]+sum){
                 erase_num.push_back(j);
                 //cout << search_edge[j].to << "への枝は枝切りする予定です."<<search_edge[i].to<<"を通る経路の上界は"<<upper_vec[i]<<"で、"<<search_edge[j].to<<"を通る経路の下界は"<<lower_vec[j]<<endl;
             }
@@ -223,7 +223,7 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int 
 }
 
 int main(){
-    string filename("Graphs/n_6/n_6_m_12.txt");
+    string filename("Graphs/n_10/n_10_m_50.txt");
     int number;
 
     ifstream input_file(filename);

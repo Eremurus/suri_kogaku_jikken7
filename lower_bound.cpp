@@ -23,6 +23,12 @@ struct Edge {
     Edge(int to, int w) : to(to), w(w) {}
 };
 
+struct forLowerBound {
+    int distance;
+    bool canCut;
+    vector<int> path;
+} typedef forLowerBound;
+
 // 重み付きグラフを表す型
 int N;
 
@@ -79,6 +85,7 @@ int main(){
     vector<int> dist(N, INF);
     dist[s] = 0;
     vector<int> path_;
+    vector<int> prev(N, -1);
     for (int iter = 0; iter < N; ++iter) {
         bool update = false; // 更新が発生したかどうかを表すフラグ
         for (int v = 0; v < N; ++v) {
@@ -90,6 +97,7 @@ int main(){
                 if (chmin(dist[e.to], dist[v] + e.w)) {
                     dist[e.to] = dist[v] + e.w;
                     update = true;
+                    prev[e.to] = v;
                 }
             }
         }
@@ -110,27 +118,18 @@ for(int i=0; i<N; i++){
 */
     if(exist_negative_cycle==false){
         cancut = true;
-        int tmp = t;
-        path_.insert(path_.begin(), t);
-        while(tmp!=s){
-            for(auto e : G_rev[tmp]){
-                int tmp_pre = e.to;
-                bool include = false;
-                for(int _=0; _<F.size(); _++){
-                    if(F[_] == tmp_pre && tmp_pre!=s){
-                        include = true;
-                    }
-                }
-                if(include) continue;
-                if(e.w == dist[tmp] - dist[tmp_pre]){
-                    path_.insert(path_.begin(), tmp_pre);
-                    tmp = tmp_pre;
-                }
-            }
-        }    
+        for(; t!=-1; t=prev[t]) path_.push_back(t);
+        reverse(path_.begin(), path_.end());
     }
     // 結果出力
-    for(int i=0; i<path_.size(); i++){
-        cout << path_[i] << endl;
-    }
+
+    forLowerBound a;
+    a.canCut = true;
+    a.distance = 1;
+    a.path = path_;
+
+    for(int i=0; i<a.path.size(); i++){
+        cout << a.path[i] << endl;
+    }    
 }
+
