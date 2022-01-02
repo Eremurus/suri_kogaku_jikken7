@@ -223,7 +223,7 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int 
 }
 
 int main(){
-    string filename("Graphs/n_10/n_10_m_50.txt");
+    string filename("Graphs/n_11/n_11_m_90.txt");
     int number;
 
     ifstream input_file(filename);

@@ -7,12 +7,12 @@
 #include <sys/time.h>
 #include <queue>
 using namespace std;
-using std::ofstream;
 
 const int INF = pow(10,6);
 int min_weight = INF, node_num = 0, s, t;
 vector<int> minPath, F_;
 
+//時間を計る関数
 double gettimeofday_sec(){
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -27,14 +27,27 @@ bool chmin(int a, int b) {
     else return false;
 }
 
+//枝を表す
 struct Edge {
     int to; // 隣接頂点番号
     int w; // 重み
     Edge(int to, long long w) : to(to), w(w) {}
 };
 
+//ベクトルにある要素が含まれているかどうか
+bool included(int a, vector<int> vec){
+    bool include = false;
+    for(int i=0; i<vec.size(); i++){
+        if(vec[i]==a){
+            include = true;
+            break;
+        } 
+    }
+    return include;
+}
+
+//x からt への部分問題において上界を計算
 int upperBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, int N){
-    //cout << x<<"に対するupperが実行されたよ" << endl;
     if(x == t) return 0;
     vector<int> dist(N, INF);
     dist[x] = 0;
@@ -56,17 +69,10 @@ int upperBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, in
 
         // d > dist[v] は，(d, v) がゴミであることを意味する
         if (d > dist[v]) continue; 
-        //for(int i=0; i<F.size(); i++){
-            //cout << F[i] << endl;
-        //}
 
         // 頂点 v を始点とした各辺を緩和
         for (auto e : G[v]) {
-            bool include = false;
-            for(int i=0; i<F.size(); i++){
-                if(F[i] == e.to) include = true;
-            }
-            if(include) continue;
+            if(included(e.to, F)) continue;
             if (chmin(dist[e.to], dist[v] + max(e.w,0))) {
                 // 更新があるならヒープに新たに挿入
                 dist[e.to] = dist[v] + max(e.w, 0);
@@ -74,46 +80,46 @@ int upperBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, in
             }
         }
     }
-    //cout << x << "に対するupperは"<<dist[t] << endl;
-    return dist[t];
+    return dist[t];//上界を返す
 }
 
-pair<int, bool> lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, int N){
+//下界、負閉路が存在しないかどうか、負閉路が存在しない時の経路(最短路)
+struct forLowerBound {
+    int distance;
+    bool canCut;
+    vector<int> path;
+} typedef forLowerBound;
+
+//下界を求めるための関数.
+forLowerBound lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, int N){
     //cout << x<<"に対するlowerが実行されたよ" << endl;
+    vector<int> path;
+    vector<int> prev(N, -1);
     if(x==t){
-        pair<int, bool> a;
-        a.first = 0;
-        a.second = true;
+        forLowerBound a;
+        a.distance = 0;
+        a.canCut = true;
+        a.path = path;
         return a;
     }
-    //xからtへの部分問題.閉路を許容した緩和問題とする.
-    //ベルマンフォードでN回やる
-    //これで本当に下界が求まるか一度試す
-    //行けそうなら、「閉路がなければ部分問題の解であるとして打ち切り、経路上の頂点を全てF_に格納」を実装
+
     bool exist_negative_cycle = false; // 負閉路をもつかどうか
     vector<int> dist(N, INF);
     dist[x] = 0;
     bool can_cut = false;
-    for (int iter = 0; iter < N-F.size()+1; ++iter) {
+    for (int iter = 0; iter < N-F.size()+1; iter++) {
         bool update = false; // 更新が発生したかどうかを表すフラグ
         for (int v = 0; v < N; ++v) {
             // dist[v] = INF のときは頂点 v からの緩和を行わない
             if (dist[v] == INF) continue;
-            bool include = false;
-            for(int _=0; _<F.size(); _++){
-                if(F[_] == v && v!= x) include = true;
-            }
-            if(include) continue;
+            if(v != x && included(v, F)) continue;
+
             for (auto e : G[v]) {
-                bool include_ = false;
-                for(int _=0; _<F.size(); _++){
-                    if(F[_] == v && v!=x) include_ = true;
-                }
-                if(include_) continue;
                 // 緩和処理を行い，更新されたら update を true にする
-                if (chmin(dist[e.to], dist[v] + e.w)) {
+                if (chmin(dist[e.to], dist[v] + e.w) && !included(e.to, F)) {
                     dist[e.to] = dist[v] + e.w;
                     update = true;
+                    prev[e.to] = v;
                 }
             }
         }
@@ -121,103 +127,125 @@ pair<int, bool> lowerBound(int x, int t, vector<int> F, vector<vector<Edge> > G,
         // 更新が行われなかったら，すでに最短路が求められている
         if (!update) break;
 
-        // N 回目の反復で更新が行われたならば，負閉路をもつ
-        if (iter == N - F.size() && update){
+        // N-F.size() 回目の反復で更新が行われたならば，負閉路をもつ
+        if (iter == N-F.size() && update){
             exist_negative_cycle = true;
             break;
         }
     }
-
-    if(exist_negative_cycle==false){
+    //負閉路を持たない場合、経路を復元
+    if(exist_negative_cycle==false && dist[t]!=INF){
         can_cut = true;
+        int t_ = t;
+        for(; t_!=-1; t_=prev[t_]) path.push_back(t_);
+        reverse(path.begin(), path.end());
     }
-    // 結果出力
-    //for (int v = 0; v < N; ++v) {
-    //    if (dist[v] < INF) cout << dist[v] << endl;
-    //    else cout << "INF" << endl;
-    //}
-    //cout << x << "に対するlowerは"<<dist[t] << endl;
-    pair<int, bool> a;
-    a.first = dist[t];
-    a.second = can_cut;
+    forLowerBound a;
+    a.distance = dist[t];
+    a.canCut = can_cut;
+    a.path = path;
     return a;
 }
 
+//メイン関数の返す型
+struct forBranchAndBound {
+    int distance;
+    int node;
+    vector<int> path;
+} typedef forBranchAndBound;
+
+//枝刈りを行う
 void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, int N){
     node_num += 1;
     vector<int> upper_vec;
     vector<int> lower_vec;
     vector<Edge> search_edge;
-    //cout << x << "の部分問題において"<<endl;
+    vector<forBranchAndBound> edge_cut_vec;
     for(auto e : G[x]){
         int y = e.to;
-        bool include = false;
-        for(int i=0; i<F.size(); i++){
-            if(F[i] == y) include = true;
-        }
-        if(include){
-            //cout << y << "は走査済み"<<endl;
-            continue;
-        }
+        if(included(y, F)) continue;
         vector<int> F_tmp;
         copy(F.begin(), F.end(), back_inserter(F_tmp));
         F_tmp.push_back(y);
+        forLowerBound lower_tmp = lowerBound(y, t, F_tmp, G, sum, N);
+
+        //下界、上界を計算
+        int lower = lower_tmp.distance + e.w;
         int upper = upperBound(y, t, F_tmp, G, sum, N) + e.w;
-        //cout << upperBound(y, t, F_tmp, G, sum, N) << endl;
-        int lower = lowerBound(y, t, F_tmp, G, sum, N).first + e.w;
-        //cout << x<<"と"<<y<<"の間の枝をとおる.tへの経路の上界は"<<upper << "で、下界は"<<lower<<endl;
-        if(lowerBound(y, t, F_tmp, G, sum, N).second){
-            //continue;//yからtへの部分問題の最短経路が求まってるので、求めた経路とその長さを利用してから打ち切る
+
+        //下界を求めた際、負閉路がなかった場合
+        if(lower_tmp.canCut){
+            upper = lower;
+            forBranchAndBound b;
+            b.distance = lower;
+            b.node = y;
+            b.path = lower_tmp.path;
+            edge_cut_vec.push_back(b);
         }
         upper_vec.push_back(upper);
         lower_vec.push_back(lower);
         search_edge.push_back(e);
-        //cout << y <<"をsearch_edgeに格納"<<endl;
     }
 
-    vector<int> erase_num;
+    vector<int> erase_num;//枝刈りする枝の行き先
 
     for(int i=0; i<upper_vec.size(); i++){
         for(int j=0; j<upper_vec.size(); j++){
-            if(upper_vec[i] < lower_vec[j]){
+            if(upper_vec[i] < lower_vec[j] || min_weight<lower_vec[j]+sum){
                 erase_num.push_back(j);
-                //cout << search_edge[j].to << "への枝は枝切りする予定です."<<search_edge[i].to<<"を通る経路の上界は"<<upper_vec[i]<<"で、"<<search_edge[j].to<<"を通る経路の下界は"<<lower_vec[j]<<endl;
             }
         }
     }
+
     int k=-1;
+    //調査する
     if(search_edge.size()!=0){
         for(auto e : search_edge){
             int y = e.to;
-            //cout <<x<<"の部分問題において"<< y << "への枝を調べる可能性があります." << endl;
-            k += 1;
+            k += 1;  
             bool include = false;
-            for(int i=0; i<erase_num.size(); i++){
-                if(erase_num[i]==k) include=true;
+            
+            //枝刈りするかどうか
+            int I;
+            for(int i=0; i<edge_cut_vec.size(); i++){
+                if(edge_cut_vec[i].node == y){
+                    include = true;
+                    I = i;
+                }
             }
+            
+            //下界がその部分問題の最短経路長である場合、枝刈りして暫定の最短距離と比較
+            vector<int> F_copy;
             if(include){
-                //cout << y << "への枝は枝刈りしました"<<endl;
+                copy(F.begin(), F.end(), back_inserter(F_copy));
+                F_copy.insert(F_copy.end(), edge_cut_vec[I].path.begin(), edge_cut_vec[I].path.end());
+                int sum_tmp = edge_cut_vec[I].distance+sum;
+                if(sum_tmp < min_weight){
+                    min_weight = sum_tmp;
+                    minPath.clear();
+                    copy(F_copy.begin(), F_copy.end(), back_inserter(minPath));
+                }
                 continue;
             }
-            vector<int> F_copy;
+            
+            //上界 < 下界の時、その下界を与える部分問題を枝刈り
+            if(included(k, erase_num)) continue;
+            
             int sum_tmp;
             copy(F.begin(), F.end(),back_inserter(F_copy));
             sum_tmp = sum + e.w;
             F_copy.push_back(y);
+            //暫定の最短経路長と比較
             if(y == t){
-                    //for(int i=0; i<F_copy.size(); i++){
-                        //if(i!= F_copy.size()-1) cout << F_copy[i] << " -> ";
-                        //else cout << F_copy[i] << " " << sum_tmp << endl;
-                    //}
-                    //cout << endl;
                 if(sum_tmp < min_weight){
                     min_weight = sum_tmp;
                     minPath.clear();
                     copy(F_copy.begin(), F_copy.end(), back_inserter(minPath));
                 }
             }
+            //再帰的に関数を呼び出す
             else{
-                branch_and_bound(y, t, F_copy, G,sum_tmp, N);
+                branch_and_bound(y, t, F_copy, G, sum_tmp, N);
             }
         }
     }
@@ -228,7 +256,7 @@ int main(){
     string file_name1 = "Graphs/n_18/n_18_m_60.txt";
     string file_name2 = "Graphs/n_18/n_18_m_80.txt";
     string file_name3 = "Graphs/n_18/n_18_m_100.txt";
-    //string file_name4 = "Graphs/n_18/n_18_m_120.txt";
+    string file_name4 = "Graphs/n_18/n_18_m_120.txt";
     //string file_name5 = "Graphs/n_18/n_18_m_140.txt";
     //string file_name6 = "Graphs/n_18/n_18_m_160.txt";
     //string file_name7 = "Graphs/n_18/n_18_m_180.txt";
@@ -240,7 +268,7 @@ int main(){
     file_name.push_back(file_name1);
     file_name.push_back(file_name2);
     file_name.push_back(file_name3);
-    //file_name.push_back(file_name4);
+    file_name.push_back(file_name4);
     //file_name.push_back(file_name5);
     //file_name.push_back(file_name6);
     //file_name.push_back(file_name7);
