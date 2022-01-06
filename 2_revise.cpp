@@ -51,6 +51,7 @@ int upperBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, in
     if(x == t) return 0;
     vector<int> dist(N, INF);
     dist[x] = 0;
+    vector<int> real_dist(N, INF);
 
     // (d[v], v) のペアを要素としたヒープを作る
     priority_queue<pair<int, int>,
@@ -76,11 +77,12 @@ int upperBound(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum, in
             if (chmin(dist[e.to], dist[v] + max(e.w,0))) {
                 // 更新があるならヒープに新たに挿入
                 dist[e.to] = dist[v] + max(e.w, 0);
+                real_dist[e.to] = real_dist[v] + e.w;
                 que.push(make_pair(dist[e.to], e.to)); 
             }
         }
     }
-    return dist[t];//上界を返す
+    return real_dist[t];//上界を返す
 }
 
 //下界、負閉路が存在しないかどうか、負閉路が存在しない時の経路(最短路)
@@ -253,7 +255,7 @@ void branch_and_bound(int x, int t, vector<int> F, vector<vector<Edge> > G, int 
 
 //実行
 int main(){
-    string filename("Graphs/n_12/n_12_m_70.txt");
+    string filename("Graphs/n_18/n_18_m_80.txt");
     int number;
 
     ifstream input_file(filename);

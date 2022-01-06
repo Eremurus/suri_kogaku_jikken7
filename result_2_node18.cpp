@@ -9,7 +9,7 @@
 using namespace std;
 
 const int INF = pow(10,6);
-int min_weight = INF, node_num = 0, s, t;
+int min_weight, node_num, s, t;
 vector<int> minPath, F_;
 
 //時間を計る関数
@@ -314,7 +314,9 @@ int main(){
         int s = 0;
         int t = N-1;
         F_.push_back(s);
-
+        
+        node_num = 0;
+        min_weight = INF;
         double start = gettimeofday_sec();
         branch_and_bound(s,t,F_,G,0,N);
         double end = gettimeofday_sec();

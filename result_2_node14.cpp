@@ -9,7 +9,7 @@
 using namespace std;
 
 const int INF = pow(10,6);
-int min_weight = INF, node_num = 0, s, t;
+int min_weight, node_num, s, t;
 vector<int> minPath, F_;
 
 //時間を計る関数
@@ -317,6 +317,8 @@ int main(){
         int t = N-1;
         F_.push_back(s);
 
+        node_num = 0;
+        min_weight = INF;
         double start = gettimeofday_sec();
         branch_and_bound(s,t,F_,G,0,N);
         double end = gettimeofday_sec();
@@ -324,14 +326,14 @@ int main(){
         //writing_file << "実行にかかった時間は " << (end-start)*1000 << " msec"<< endl;
         //cout << "探索したノードの数は" << node_num <<endl;
 
-        //cout << "最短経路は" << endl;
-        /*
+        cout << "最短経路は" << endl;
+        
         for(int i=0; i<minPath.size(); i++){
             if(i != minPath.size()-1) cout << minPath[i] << " -> ";
             else{
                 cout << minPath[i]<< endl;
             }
-        }*/
+        }
         //cout << "その距離は " << min_weight << endl;
         }
         writing_file.close();

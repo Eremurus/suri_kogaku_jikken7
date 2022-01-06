@@ -10,7 +10,7 @@ using namespace std;
 using std::ofstream;
 
 const int INF = pow(10,6);
-int min_weight = INF, node_num = 0, s, t;
+int min_weight, node_num, s, t;
 vector<int> minPath, F_;
 
 double gettimeofday_sec(){
@@ -73,9 +73,9 @@ int main(){
     string file_name2 = "Graphs/n_18/n_18_m_80.txt";
     string file_name3 = "Graphs/n_18/n_18_m_100.txt";
     string file_name4 = "Graphs/n_18/n_18_m_120.txt";
-    string file_name5 = "Graphs/n_18/n_18_m_140.txt";
-    string file_name6 = "Graphs/n_18/n_18_m_160.txt";
-    string file_name7 = "Graphs/n_18/n_18_m_180.txt";
+    //string file_name5 = "Graphs/n_18/n_18_m_140.txt";
+    //string file_name6 = "Graphs/n_18/n_18_m_160.txt";
+    //string file_name7 = "Graphs/n_18/n_18_m_180.txt";
     //string file_name8 = "Graphs/n_18/n_18_m_30.txt";
     //string file_name9 = "Graphs/n_18/n_18_m_30.txt";
 
@@ -85,9 +85,9 @@ int main(){
     file_name.push_back(file_name2);
     file_name.push_back(file_name3);
     file_name.push_back(file_name4);
-    file_name.push_back(file_name5);
-    file_name.push_back(file_name6);
-    file_name.push_back(file_name7);
+    //file_name.push_back(file_name5);
+    //file_name.push_back(file_name6);
+    //file_name.push_back(file_name7);
     //file_name.push_back(file_name8);
     //file_name.push_back(file_name9);
 
@@ -132,6 +132,9 @@ int main(){
         int s = 0;
         int t = N-1;
         F_.push_back(s);
+
+        node_num = 0;
+        min_weight = INF;
 
         double start = gettimeofday_sec();
         PathAll(s,t,F_,G,0);

@@ -10,7 +10,7 @@ using namespace std;
 using std::ofstream;
 
 const int INF = pow(10,6);
-int min_weight = INF, node_num = 0, s, t;
+int min_weight, node_num, s, t;
 vector<int> minPath, F_;
 
 double gettimeofday_sec(){
@@ -132,6 +132,9 @@ int main(){
         int s = 0;
         int t = N-1;
         F_.push_back(s);
+
+        node_num = 0;
+        min_weight = INF;
 
         double start = gettimeofday_sec();
         PathAll(s,t,F_,G,0);
