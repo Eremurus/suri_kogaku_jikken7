@@ -21,10 +21,12 @@ struct Edge {
 
 double min_weight = pow(10,6);
 vector<int> minPath;
-int node_num = 0;
+int node_num = 0;//探索ノード数
 
+//再帰関数
 void PathAll(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum){
     node_num += 1;
+    //x から伸びる有向枝に対して
     for(auto e : G[x]){
         int y = e.to;
         bool include = false;
@@ -36,14 +38,10 @@ void PathAll(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum){
             vector<int> F_copy;
             int sum_tmp;
             copy(F.begin(), F.end(),back_inserter(F_copy));
+            //s からx までの距離にw(x,y) を足す
             sum_tmp = sum + e.w;
             F_copy.push_back(y);
             if(y == t){
-                //for(int i=0; i<F_copy.size(); i++){
-                    //if(i!= F_copy.size()-1) cout << F_copy[i] << " -> ";
-                    //else cout << F_copy[i] << " " << sum_tmp << endl;
-                //}
-                //cout << endl;
                 if(sum_tmp < min_weight){
                     min_weight = sum_tmp;
                     minPath.clear();
@@ -58,6 +56,7 @@ void PathAll(int x, int t, vector<int> F, vector<vector<Edge> > G, int sum){
 }
 
 int main(){
+    //ファイルの読み込み
     int N, M;
     string filename("Graphs/n_14/n_14_m_90.txt");
     int number;
@@ -68,6 +67,7 @@ int main(){
         return EXIT_FAILURE;
     }
 
+    //グラフの作成
     int i=0;
     vector<int> From, To, W;
     while (input_file >> number) {
@@ -95,6 +95,7 @@ int main(){
     int t = N-1;
     F_.push_back(s);
 
+    //時間の計測とpathall の実行
     double start = gettimeofday_sec();
     PathAll(s,t,F_,G,0);
     double end = gettimeofday_sec();
